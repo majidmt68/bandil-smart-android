@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#102a43">
+<meta name="description" content="محاسبه میانگین وزن بندیل‌ها و پیشنهاد اصلاح ترکیب بار">
+<link rel="manifest" href="manifest.webmanifest">
+<title>مدیریت هوشمند وزن بندیل</title>
+<style>
+:root{--navy:#102a43;--blue:#1769aa;--bg:#f2f5f8;--card:#fff;--ink:#172b4d;--muted:#64748b;--line:#dce4ec;--green:#16834a;--greenbg:#eaf7ef;--red:#c0392b;--redbg:#fff0ee;--yellow:#9a6b00;--yellowbg:#fff7df;--shadow:0 5px 18px #18324a10}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif;padding-bottom:30px}
+header{background:var(--navy);color:#fff;padding:22px 17px 28px;border-radius:0 0 24px 24px}
+.head{max-width:760px;margin:auto}h1{font-size:21px;margin:0 0 7px}.subtitle{font-size:12px;color:#d5e2ee;line-height:1.8}
+main{max-width:760px;margin:-13px auto 0;padding:0 12px}.card{background:var(--card);border-radius:16px;padding:15px;margin:12px 0;box-shadow:var(--shadow)}
+h2{font-size:15px;margin:0 0 13px}.muted{color:var(--muted);font-size:12px;line-height:1.8}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field{min-width:0;margin-bottom:10px}label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+input{width:100%;min-width:0;padding:12px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:16px Tahoma,Arial;outline:none}
+input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #1769aa18}
+button{border:0;border-radius:11px;padding:12px 14px;font: bold 14px Tahoma,Arial;cursor:pointer}
+.primary{background:var(--blue);color:#fff}.soft{background:#e8f1f8;color:#145b91}.danger{background:#fdeceb;color:var(--red)}.full{width:100%}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.actions button{flex:1}
+.statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.stat{background:#f6f9fc;border:1px solid var(--line);border-radius:12px;padding:11px}
+.stat span{display:block;color:var(--muted);font-size:11px;margin-bottom:6px}.stat strong{font-size:21px}
+.status{margin-top:11px;padding:11px 12px;border-radius:11px;font-size:13px;line-height:1.8;font-weight:bold}
+.ok{background:var(--greenbg);color:var(--green)}.high{background:var(--redbg);color:var(--red)}.low{background:var(--yellowbg);color:var(--yellow)}
+.bundle{border:1px solid var(--line);border-radius:13px;padding:12px;margin:9px 0;background:#fff}
+.bundle.red{border-right:5px solid var(--red)}.bundle.green{border-right:5px solid var(--green)}.bundle.yellow{border-right:5px solid #d6a21a}
+.btop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.btitle{font-weight:bold;font-size:14px}
+.tag{font-size:11px;padding:5px 8px;border-radius:30px;white-space:nowrap}.tag.red{background:var(--redbg);color:var(--red)}.tag.green{background:var(--greenbg);color:var(--green)}.tag.yellow{background:var(--yellowbg);color:var(--yellow)}
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.bgrid .field{margin:0}.avgline{font-size:12px;color:var(--muted);margin-top:9px}
+.recommend{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;line-height:1.9;font-size:13px}
+.recommend.best{border-right:4px solid var(--green);background:#fbfefc}
+.recommend.warn{border-right:4px solid #d6a21a;background:#fffdf6}
+.recommend strong{font-size:14px}
+.smallbtn{padding:8px 10px;font-size:12px}
+.empty{text-align:center;color:var(--muted);font-size:12px;padding:15px}
+.note{font-size:11px;color:var(--muted);line-height:1.9}
+hr{border:0;border-top:1px solid var(--line);margin:13px 0}
+@media(max-width:390px){.grid,.statgrid{grid-template-columns:1fr 1fr}.stat strong{font-size:18px}.bgrid{gap:7px}}
+</style>
+</head>
+<body>
+<header><div class="head"><h1>مدیریت هوشمند وزن بندیل</h1><div class="subtitle">محاسبه میانگین هر بندیل و میانگین کل بار، به‌همراه پیشنهاد ترکیب مناسب‌تر</div></div></header>
+<main>
+<section class="card">
+<h2>۱) محدوده وزن موردنظر</h2>
+<div class="grid">
+<div class="field"><label for="minTarget">حداقل میانگین (کیلوگرم)</label><input id="minTarget" inputmode="decimal" value="132"></div>
+<div class="field"><label for="maxTarget">حداکثر میانگین (کیلوگرم)</label><input id="maxTarget" inputmode="decimal" value="133"></div>
+</div>
+<h2 style="margin-top:5px">۲) تعداد شاخه‌ها و بندیل‌ها</h2>
+<div class="grid">
+<div class="field"><label for="branchCount">تعداد شاخه در هر بندیل</label><input id="branchCount" inputmode="numeric" value="40"></div>
+<div class="field"><label for="bundleCount">تعداد بندیل‌ها</label><input id="bundleCount" inputmode="numeric" value="5"></div>
+</div>
+<div class="statgrid">
+<div class="stat"><span>تعداد کل شاخه‌ها</span><strong id="totalBranches">۲۰۰</strong></div>
+<div class="stat"><span>تعداد بندیل ثبت‌شده</span><strong id="enteredCount">۰ از ۵</strong></div>
+</div>
+<div class="muted" style="margin-top:8px">تعداد بندیل را تغییر بده تا ردیف‌های ورودی کم یا زیاد شوند. تعداد شاخه هر بندیل فعلاً یکسان در نظر گرفته می‌شود.</div>
+</section>
+
+<section class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">۳) وزن هر بندیل را وارد کن</h2><button class="soft smallbtn" id="fillDemo">نمونه آزمایشی</button></div>
+<div id="bundles"></div>
+</section>
+
+<section class="card">
+<h2>۴) نتیجه محاسبات</h2>
+<div class="statgrid">
+<div class="stat"><span>مجموع وزن بار (کیلوگرم)</span><strong id="totalWeight">—</strong></div>
+<div class="stat"><span>میانگین کل هر شاخه</span><strong id="overallAvg">—</strong></div>
+</div>
+<div id="overallStatus" class="status" style="display:none"></div>
+<div class="note" style="margin-top:8px">میانگین کل = مجموع وزن بندیل‌های واردشده ÷ مجموع شاخه‌های همان بندیل‌ها. بندیل خالی در میانگین محاسبه نمی‌شود.</div>
+</section>
+
+<section class="card">
+<h2>۵) پیشنهاد اصلاح بار</h2>
+<div class="muted">برنامه ترکیب‌های ممکن از بندیل‌های ثبت‌شده را بررسی می‌کند و ترکیبی را پیشنهاد می‌دهد که بیشترین تعداد بندیل را نگه دارد و میانگین آن داخل محدوده باشد. اگر چنین ترکیبی پیدا نشود، نزدیک‌ترین ترکیب را نشان می‌دهد.</div>
+<div id="suggestions"><div class="empty">برای دریافت پیشنهاد، وزن حداقل دو بندیل را وارد کن.</div></div>
+<div class="note">نکته: پیشنهاد حذف/نگه‌داشتن فقط بر اساس بندیل‌هایی است که وارد کرده‌ای. برای پیشنهاد «جایگزین کردن» باید وزن بندیل جایگزین هم در برنامه ثبت شده باشد؛ برنامه وزن بندیل ناشناخته را حدس نمی‌زند.</div>
+</section>
+
+<div class="actions" style="padding:0 2px">
+<button class="soft" id="exportCsv">خروجی اکسل (CSV)</button>
+<button class="danger" id="reset">پاک کردن همه اطلاعات</button>
+</div>
+<div class="note" style="text-align:center;margin-top:10px">اطلاعات در همین مرورگر ذخیره می‌شود و با بستن صفحه از بین نمی‌رود.</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const faDigits='۰۱۲۳۴۵۶۷۸۹';
+function nval(v){let s=String(v??'').trim().replace(/[۰-۹]/g,d=>faDigits.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(',','.');return s===''?NaN:Number(s)}
+function f(v,d=2){return Number(v).toLocaleString('fa-IR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function intFa(v){return Number(v).toLocaleString('fa-IR')}
+let data=[];
+try{data=JSON.parse(localStorage.getItem('bandil_smart_data')||'[]')}catch(e){}
+function save(){localStorage.setItem('bandil_smart_data',JSON.stringify(data))}
+function cfg(){return {min:nval($('minTarget').value),max:nval($('maxTarget').value),branches:nval($('branchCount').value),count:nval($('bundleCount').value)}}
+function ensureRows(){
+ let c=cfg().count;if(!Number.isInteger(c)||c<1||c>100)return;
+ while(data.length<c)data.push('');
+ if(data.length>c)data=data.slice(0,c);
+ renderRows();save();calculate();
+}
+function renderRows(){
+ const box=$('bundles');box.innerHTML='';let c=cfg().count,bc=cfg().branches;
+ for(let i=0;i<c;i++){
+  const w=data[i]??'';const div=document.createElement('div');div.className='bundle';div.id='bundle_'+i;
+  const top=document.createElement('div');top.className='btop';
+  const title=document.createElement('div');title.className='btitle';title.textContent='بندیل شماره '+intFa(i+1);
+  const tag=document.createElement('span');tag.className='tag';tag.id='tag_'+i;tag.textContent='منتظر وزن';
+  top.append(title,tag);
+  const grid=document.createElement('div');grid.className='bgrid';
+  const field=document.createElement('div');field.className='field';
+  const label=document.createElement('label');label.textContent='وزن کل بندیل (کیلوگرم)';
+  const input=document.createElement('input');input.inputMode='decimal';input.placeholder='مثلاً ۵۳۳۵';input.value=w;input.dataset.index=i;
+  input.addEventListener('input',e=>{data[i]=e.target.value;save();calculate()});
+  field.append(label,input);
+  const field2=document.createElement('div');field2.className='field';
+  const label2=document.createElement('label');label2.textContent='تعداد شاخه این بندیل';
+  const val=document.createElement('input');val.disabled=true;val.value=Number.isFinite(bc)&&bc>0?intFa(bc):'—';val.setAttribute('aria-label','تعداد شاخه این بندیل');
+  field2.append(label2,val);grid.append(field,field2);
+  const avg=document.createElement('div');avg.className='avgline';avg.id='avg_'+i;avg.textContent='میانگین هر شاخه: —';
+  div.append(top,grid,avg);box.append(div);
+ }
+}
+function combinations(items){
+ // exact subset search up to 20 items; above that use a bounded beam search to avoid freezing a phone
+ if(items.length<=20){
+  let out=[];const total=1<<items.length;
+  for(let mask=1;mask<total;mask++){
+   let weight=0,branches=0,ids=[];
+   for(let i=0;i<items.length;i++)if(mask&(1<<i)){weight+=items[i].weight;branches+=items[i].branches;ids.push(items[i].index+1)}
+   out.push({weight,branches,ids,avg:weight/branches});
+  }
+  return out;
+ }
+ let states=[{weight:0,branches:0,ids:[]}];
+ for(const it of items){
+  const add=states.map(s=>({weight:s.weight+it.weight,branches:s.branches+it.branches,ids:[...s.ids,it.index+1]}));
+  states=states.concat(add);
+  states.sort((a,b)=>b.ids.length-a.ids.length);
+  states=states.slice(0,12000);
+ }
+ return states.filter(s=>s.branches>0).map(s=>({...s,avg:s.weight/s.branches}));
+}
+function calculate(){
+ const c=cfg(),items=[];
+ const validRange=Number.isFinite(c.min)&&Number.isFinite(c.max)&&c.min<=c.max;
+ const validBranches=Number.isInteger(c.branches)&&c.branches>0;
+ let totalW=0,totalB=0,entered=0;
+ data.forEach((raw,i)=>{
+  const w=nval(raw),el=$('bundle_'+i);if(!el)return;
+  el.className='bundle';$('tag_'+i).className='tag';$('tag_'+i).textContent='منتظر وزن';
+  if(!Number.isFinite(w)||w<=0||!validBranches){$('avg_'+i).textContent='میانگین هر شاخه: —';return}
+  entered++;const avg=w/c.branches;totalW+=w;totalB+=c.branches;
+  items.push({index:i,weight:w,branches:c.branches,avg});
+  let cls,txt;
+  if(!validRange){cls='';txt='بررسی محدوده';}
+  else if(avg>c.max){cls='red';txt='زیاد';}
+  else if(avg<c.min){cls='yellow';txt='کمتر';}
+  else{cls='green';txt='مناسب';}
+  el.classList.add(cls);$('tag_'+i).classList.add(cls);$('tag_'+i).textContent=txt;
+  $('avg_'+i).textContent='میانگین هر شاخه: '+f(avg)+' کیلوگرم';
+ });
+ $('totalBranches').textContent=validBranches?intFa(c.branches*(Number.isInteger(c.count)&&c.count>0?c.count:0)):'—';
+ $('enteredCount').textContent=intFa(entered)+' از '+(Number.isInteger(c.count)?intFa(c.count):'—');
+ $('totalWeight').textContent=entered?f(totalW):'—';
+ $('overallAvg').textContent=totalB?f(totalW/totalB):'—';
+ const st=$('overallStatus');
+ if(totalB&&validRange){
+  let avg=totalW/totalB;st.style.display='block';
+  if(avg>c.max){st.className='status high';st.textContent='وضعیت کل بار: زیاد است؛ میانگین '+f(avg)+' کیلوگرم، بالاتر از سقف '+f(c.max)+' است.'}
+  else if(avg<c.min){st.className='status low';st.textContent='وضعیت کل بار: کمتر است؛ میانگین '+f(avg)+' کیلوگرم، پایین‌تر از کف '+f(c.min)+' است.'}
+  else{st.className='status ok';st.textContent='وضعیت کل بار: مناسب است؛ میانگین داخل محدوده '+f(c.min)+' تا '+f(c.max)+' قرار دارد.'}
+ }else{st.style.display='none'}
+ buildSuggestions(items,c,validRange);
+}
+function buildSuggestions(items,c,validRange){
+ const box=$('suggestions');box.innerHTML='';
+ if(items.length<2||!validRange){box.innerHTML='<div class="empty">برای پیشنهاد دقیق، حداقل دو وزن بندیل و محدوده معتبر وارد کن.</div>';return}
+ const combos=combinations(items);
+ if(!combos.length){box.innerHTML='<div class="empty">ترکیب قابل محاسبه‌ای پیدا نشد.</div>';return}
+ const inside=combos.filter(x=>x.avg>=c.min&&x.avg<=c.max);
+ const currentWeight=items.reduce((s,x)=>s+x.weight,0),currentBranches=items.reduce((s,x)=>s+x.branches,0),currentAvg=currentWeight/currentBranches;
+ const mid=(c.min+c.max)/2;
+ let chosen;
+ if(inside.length){
+  inside.sort((a,b)=>b.ids.length-a.ids.length||Math.abs(a.avg-mid)-Math.abs(b.avg-mid));
+  chosen=inside[0];
+ }else{
+  combos.sort((a,b)=>distance(a.avg,c)-distance(b.avg,c)||b.ids.length-a.ids.length);
+  chosen=combos[0];
+ }
+ const removed=items.filter(x=>!chosen.ids.includes(x.index+1));
+ const div=document.createElement('div');div.className='recommend '+(inside.length?'best':'warn');
+ const title=document.createElement('strong');title.textContent=inside.length?'بهترین ترکیب داخل محدوده':'نزدیک‌ترین ترکیب پیدا شده';
+ const p=document.createElement('div');p.textContent='میانگین این ترکیب: '+f(chosen.avg)+' کیلوگرم | وزن کل: '+f(chosen.weight)+' کیلوگرم | تعداد شاخه: '+intFa(chosen.branches);
+ const p2=document.createElement('div');p2.textContent='بندیل‌های نگه‌داشته‌شده: '+chosen.ids.map(x=>intFa(x)).join('، ');
+ const p3=document.createElement('div');
+ if(removed.length)p3.textContent='پیشنهاد: بندیل‌های شماره '+removed.map(x=>intFa(x.index+1)).join('، ')+' را از این ترکیب خارج کن.';
+ else p3.textContent='همه بندیل‌های واردشده در ترکیب پیشنهادی باقی می‌مانند.';
+ div.append(title,p,p2,p3);box.append(div);
+ const cur=document.createElement('div');cur.className='recommend';
+ cur.innerHTML='<strong>مقایسه با بار فعلی</strong>';
+ const cp=document.createElement('div');cp.textContent='میانگین فعلی: '+f(currentAvg)+' کیلوگرم';
+ const delta=document.createElement('div');delta.textContent='تغییر میانگین با این ترکیب: '+(chosen.avg-currentAvg>=0?'+':'')+f(chosen.avg-currentAvg)+' کیلوگرم';
+ cur.append(cp,delta);box.append(cur);
+ if(!inside.length){
+  const hint=document.createElement('div');hint.className='note';hint.textContent='با وزن‌های ثبت‌شده، هیچ ترکیبی داخل محدوده نیست. برای اصلاح واقعی، وزن بندیل‌های جایگزین را هم وارد کن یا محدوده را بازبینی کن.';box.append(hint);
+ }
+}
+function distance(avg,c){return avg<c.min?c.min-avg:avg>c.max?avg-c.max:0}
+$('bundleCount').addEventListener('change',ensureRows);
+$('branchCount').addEventListener('input',()=>{renderRows();calculate()});
+$('minTarget').addEventListener('input',calculate);$('maxTarget').addEventListener('input',calculate);
+$('fillDemo').onclick=()=>{let c=cfg();if(!Number.isInteger(c.count)||c.count<1)return;data=Array.from({length:c.count},(_,i)=>['5335','5280','5300','5360','5260'][i]||'');renderRows();save();calculate()};
+$('reset').onclick=()=>{if(confirm('همه وزن‌های واردشده پاک شوند؟')){data=Array.from({length:Math.max(1,Math.min(100,cfg().count||5))},()=> '');renderRows();save();calculate()}};
+$('exportCsv').onclick=()=>{
+ const c=cfg(),rows=[['شماره بندیل','وزن کل (کیلوگرم)','تعداد شاخه','میانگین هر شاخه','وضعیت']];
+ data.forEach((raw,i)=>{let w=nval(raw);if(!Number.isFinite(w)||w<=0||!Number.isFinite(c.branches)||c.branches<=0)return;let a=w/c.branches;let status=a>c.max?'زیاد':a<c.min?'کمتر':'مناسب';rows.push([i+1,w,c.branches,a,status])});
+ if(rows.length===1){alert('وزنی برای خروجی ثبت نشده است.');return}
+ let tw=0,tb=0;data.forEach(x=>{let w=nval(x);if(w>0&&c.branches>0){tw+=w;tb+=c.branches}});
+ rows.push([],['جمع کل',tw,tb,tb?tw/tb:'','']);
+ let blob=new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='gozaresh-vazn-bandil.csv';a.click();URL.revokeObjectURL(url);
+};
+if(data.length===0)data=Array.from({length:5},()=> '');
+$('bundleCount').value=String(data.length);
+renderRows();calculate();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body></html>
